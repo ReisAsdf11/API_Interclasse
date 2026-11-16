@@ -71,6 +71,56 @@ public class Conexao {
                 criado_em   TEXT    NOT NULL DEFAULT (datetime('now'))
             )
             """,
+            """
+            CREATE TABLE IF NOT EXISTS turma (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome       TEXT NOT NULL,
+                curso      TEXT,
+                ano        INTEGER DEFAULT (CAST(strftime('%Y', 'now') AS INTEGER))
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS modalidade (
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
+                nome       TEXT NOT NULL,
+                ativo      BOOLEAN DEFAULT TRUE
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS inscricao (
+                id         INTEGRE PRIMARY KEY AUTOINCREMENT,
+                time_id    INTEGER,
+                FOREIGN KEY (time_id) REFERENCES time(id),
+                modalidade_id INTEGER,
+                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id),
+                data_inscricao TEXT NOT NULL DEFAULT (datetime('now')),
+                status TEXT CHECK (status IN ('PENDENTE', 'APROVADA', 'REJEITADA'))
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS partida (
+                id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                modalidade_id INTEGER,
+                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id),
+                time_a_id INTEGER,
+                FOREIGN KEY (time_a_id) REFERENCES time(id),
+                time_b_id INTEGER,
+                FOREIGN KEY (time_b_id) REFERENCES time(id),
+                placar_a INTEGER,
+                placar_b INTEGER,
+                data DATE,
+                hora TIME,
+                local TEXT,
+                fase TEXT CHECK (fase IN ('AVULSO', 'GRUPOS', 'QUARTAS', 'SEMI', 'FINAL')),
+                status TEXT CHECK (status IN ('AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA'))
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS configuracao (
+                chave TEXT PRIMARY KEY,
+                valor TEXT
+            )
+            """,
             "INSERT OR IGNORE INTO chave_mestra (chave) VALUES ('ETEC-INTERCLASSE-2026')"
         };
 
