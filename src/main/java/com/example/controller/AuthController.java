@@ -24,7 +24,7 @@ import java.sql.SQLException;
  *   POST /api/auth/logout               -> faz logout
  *   GET  /api/auth/me                   -> dados do usuario logado
  */
-@WebServlet("/auth/*")
+@WebServlet("/api/auth/*")
 public class AuthController extends HttpServlet {
 
     private UsuarioDao dao = new UsuarioDao();

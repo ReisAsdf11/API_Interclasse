@@ -23,7 +23,7 @@ import java.util.List;
  *   PUT    /api/times?id=1 -> atualiza um time
  *   DELETE /api/times?id=1 -> remove um time
  */
-@WebServlet("/times")
+@WebServlet("/api/times")
 public class TimeController extends HttpServlet {
 
     private TimeDao dao = new TimeDao();
@@ -116,6 +116,10 @@ public class TimeController extends HttpServlet {
         } catch (NumberFormatException e) {
             JsonUtil.enviarErro(response, HttpServletResponse.SC_BAD_REQUEST, "id invalido");
         } catch (SQLException e) {
+            if (e.getMessage() != null && e.getMessage().contains("FOREIGN KEY")) {
+                JsonUtil.enviarErro(response, HttpServletResponse.SC_CONFLICT, "Time possui registros vinculados");
+                return;
+            }
             JsonUtil.enviarErro(response, HttpServletResponse.SC_INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }

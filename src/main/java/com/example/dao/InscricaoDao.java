@@ -15,7 +15,10 @@ import java.util.List;
 public class InscricaoDao {
 
     private static final String SQL_LISTAR = "SELECT * FROM inscricao ORDER BY id";
+    private static final String SQL_LISTAR_POR_MODALIDADE = "SELECT * FROM inscricao WHERE modalidade_id = ? ORDER BY id";
     private static final String SQL_BUSCAR = "SELECT * FROM inscricao WHERE id = ?";
+    private static final String SQL_BUSCAR_POR_TIME_MODALIDADE = "SELECT * FROM inscricao WHERE time_id = ? AND modalidade_id = ? LIMIT 1";
+    private static final String SQL_BUSCAR_CONFIRMADA = "SELECT * FROM inscricao WHERE time_id = ? AND modalidade_id = ? AND status = 'CONFIRMADA' LIMIT 1";
     private static final String SQL_INSERIR = "INSERT INTO inscricao (time_id, modalidade_id, data_inscricao, status) VALUES (?, ?, ?, ?)";
     private static final String SQL_ATUALIZAR = "UPDATE inscricao SET time_id = ?, modalidade_id = ?, data_inscricao = ?, status = ? WHERE id = ?";
     private static final String SQL_DELETAR = "DELETE FROM inscricao WHERE id = ?";
@@ -35,6 +38,23 @@ public class InscricaoDao {
         return inscricoes;
     }
 
+    public List<Inscricao> listarPorModalidade(int modalidadeId) throws SQLException {
+        List<Inscricao> inscricoes = new ArrayList<>();
+        Connection conn = Conexao.getConexao();
+
+        try (PreparedStatement ps = conn.prepareStatement(SQL_LISTAR_POR_MODALIDADE)) {
+            ps.setInt(1, modalidadeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    inscricoes.add(mapear(rs));
+                }
+            }
+        }
+
+        return inscricoes;
+    }
+
     public Inscricao buscarPorId(int id) throws SQLException {
         Connection conn = Conexao.getConexao();
 
@@ -43,6 +63,32 @@ public class InscricaoDao {
 
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? mapear(rs) : null;
+            }
+        }
+    }
+
+    public Inscricao buscarPorTimeEModalidade(int timeId, int modalidadeId) throws SQLException {
+        Connection conn = Conexao.getConexao();
+
+        try (PreparedStatement ps = conn.prepareStatement(SQL_BUSCAR_POR_TIME_MODALIDADE)) {
+            ps.setInt(1, timeId);
+            ps.setInt(2, modalidadeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? mapear(rs) : null;
+            }
+        }
+    }
+
+    public boolean estaConfirmada(int timeId, int modalidadeId) throws SQLException {
+        Connection conn = Conexao.getConexao();
+
+        try (PreparedStatement ps = conn.prepareStatement(SQL_BUSCAR_CONFIRMADA)) {
+            ps.setInt(1, timeId);
+            ps.setInt(2, modalidadeId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
             }
         }
     }

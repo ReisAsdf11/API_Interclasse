@@ -32,8 +32,14 @@ public class Conexao {
             } catch (ClassNotFoundException e) {
                 throw new SQLException("Driver do SQLite nao encontrado", e);
             }
-            conexao = DriverManager.getConnection(URL);
-            criarTabelas(conexao);
+            Connection nova = DriverManager.getConnection(URL);
+            try {
+                criarTabelas(nova);
+            } catch (SQLException e) {
+                nova.close();
+                throw e;
+            }
+            conexao = nova;
         }
         return conexao;
     }
@@ -88,31 +94,31 @@ public class Conexao {
             """,
             """
             CREATE TABLE IF NOT EXISTS inscricao (
-                id         INTEGRE PRIMARY KEY AUTOINCREMENT,
+                id         INTEGER PRIMARY KEY AUTOINCREMENT,
                 time_id    INTEGER,
-                FOREIGN KEY (time_id) REFERENCES time(id),
                 modalidade_id INTEGER,
-                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id),
                 data_inscricao TEXT NOT NULL DEFAULT (datetime('now')),
-                status TEXT CHECK (status IN ('PENDENTE', 'APROVADA', 'REJEITADA'))
+                status TEXT CHECK (status IN ('PENDENTE', 'CONFIRMADA', 'NEGADA')),
+                FOREIGN KEY (time_id) REFERENCES time(id),
+                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id)
             )
             """,
             """
             CREATE TABLE IF NOT EXISTS partida (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 modalidade_id INTEGER,
-                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id),
                 time_a_id INTEGER,
-                FOREIGN KEY (time_a_id) REFERENCES time(id),
                 time_b_id INTEGER,
-                FOREIGN KEY (time_b_id) REFERENCES time(id),
                 placar_a INTEGER,
                 placar_b INTEGER,
                 data DATE,
                 hora TIME,
                 local TEXT,
                 fase TEXT CHECK (fase IN ('AVULSO', 'GRUPOS', 'QUARTAS', 'SEMI', 'FINAL')),
-                status TEXT CHECK (status IN ('AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA'))
+                status TEXT CHECK (status IN ('AGENDADA', 'EM_ANDAMENTO', 'FINALIZADA', 'CANCELADA')),
+                FOREIGN KEY (modalidade_id) REFERENCES modalidade(id),
+                FOREIGN KEY (time_a_id) REFERENCES time(id),
+                FOREIGN KEY (time_b_id) REFERENCES time(id)
             )
             """,
             """

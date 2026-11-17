@@ -4,11 +4,13 @@ package com.example.dao;
 import com.example.model.Partida;
 import com.example.util.Conexao;
 
+import javax.net.ssl.SSLException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -120,5 +122,37 @@ public class PartidaDao {
         partida.setStatus(rs.getString("status"));
 
         return partida;
+    }
+
+    public List<Partida> buscarComFiltros(Integer modalidadeId, String status, LocalDate data) throws SQLException {
+        List<Partida> partidas = new ArrayList<>();
+        List<Object> parametros = new ArrayList<>();
+        StringBuilder sql = new StringBuilder();
+        sql.append("SELECT * FROM partida WHERE 1=1 ");
+        if (modalidadeId != null) {
+            sql.append("AND modalidade_id=? ");
+            parametros.add(modalidadeId);
+        }
+        if (status != null && !status.isBlank()) {
+            sql.append("AND status LIKE ? ");
+            parametros.add("%" + status + "%");
+        }
+        if (data != null) {
+            sql.append("AND data LIKE ? ");
+            parametros.add("%" + data + "%");
+        }
+
+        Connection conn = Conexao.getConexao();
+        try (PreparedStatement stmt = conn.prepareStatement(sql.toString())) {
+            for (int i = 0; i < parametros.size(); i++) {
+                stmt.setObject(i + 1, parametros.get(i));
+            }
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    partidas.add(mapear(rs));
+                }
+            }
+        }
+        return partidas;
     }
 }

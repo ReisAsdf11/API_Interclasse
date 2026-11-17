@@ -14,7 +14,7 @@ import java.util.Map;
  * Raiz da API. Apenas um resumo das rotas disponiveis, util para testar
  * se o servidor subiu (GET /api).
  */
-@WebServlet("/")
+@WebServlet("/api")
 public class ApiController extends HttpServlet {
 
     @Override
@@ -36,6 +36,14 @@ public class ApiController extends HttpServlet {
         rotas.put("POST /api/times", "Cria um time");
         rotas.put("PUT /api/times?id=1", "Atualiza um time");
         rotas.put("DELETE /api/times?id=1", "Remove um time");
+        rotas.put("GET/POST /api/turmas", "Lista / cria turmas");
+        rotas.put("GET/POST /api/modalidades", "Lista / cria modalidades");
+        rotas.put("GET /api/inscricoes?modalidadeId=1", "Lista inscricoes da modalidade");
+        rotas.put("GET/POST /api/inscricoes", "Lista / cria inscricoes");
+        rotas.put("PUT /api/inscricoes?id=1", "Atualiza inscricao (status so organizador)");
+        rotas.put("GET/POST /api/partidas", "Lista / agenda partidas");
+        rotas.put("PATCH/PUT /api/partidas?id=1", "Atualiza placar");
+        rotas.put("POST /api/partidas/finalizar?id=1", "Finaliza partida");
         resumo.put("rotas", rotas);
 
         JsonUtil.enviar(response, resumo);

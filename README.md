@@ -11,16 +11,16 @@ e o restante do sistema é implementado pelos alunos a partir das atividades des
 **Requisitos:** JDK 17+, Maven 3.8+
 
 ```bash
-# sobe o Tomcat 7 embutido na porta 8082
-mvn tomcat7:run
+# sobe o Jetty embutido na porta 8082
+mvn jetty:run
 ```
 
-A API fica em `http://localhost:8082/meu-servlet/api`.
+A API fica em `http://localhost:8082/api`.
 
 > O banco `interclasse.db` (SQLite) é criado automaticamente na primeira conexão,
 > junto com as tabelas e os dados iniciais.
 
-**Teste rápido:** `GET http://localhost:8082/meu-servlet/api`
+**Teste rápido:** `GET http://localhost:8082/api`
 
 > O `interclasse.db` é criado na pasta do projeto. Para começar do zero, apague o arquivo
 > e suba o servidor de novo.
@@ -29,16 +29,16 @@ A API fica em `http://localhost:8082/meu-servlet/api`.
 
 ```bash
 # cadastra participante
-curl -X POST http://localhost:8082/meu-servlet/api/auth/registrar -H "Content-Type: application/json" -d '{"nome":"Ana Souza","email":"ana@etec.sp.gov.br","senha":"123456"}'
+curl -X POST http://localhost:8082/api/auth/registrar -H "Content-Type: application/json" -d '{"nome":"Ana Souza","email":"ana@etec.sp.gov.br","senha":"123456"}'
 
 # cadastra organizador (precisa da chave mestra)
-curl -X POST http://localhost:8082/meu-servlet/api/auth/registrar-organizador -H "Content-Type: application/json" -d '{"nome":"Prof Carlos","email":"carlos@etec.sp.gov.br","senha":"123456","chaveMestra":"ETEC-INTERCLASSE-2026"}'
+curl -X POST http://localhost:8082/api/auth/registrar-organizador -H "Content-Type: application/json" -d '{"nome":"Prof Carlos","email":"carlos@etec.sp.gov.br","senha":"123456","chaveMestra":"ETEC-INTERCLASSE-2026"}'
 
 # login (use -c cookies.txt para manter a sessao)
-curl -X POST http://localhost:8082/meu-servlet/api/auth/login -H "Content-Type: application/json" -c cookies.txt -d '{"email":"carlos@etec.sp.gov.br","senha":"123456"}'
+curl -X POST http://localhost:8082/api/auth/login -H "Content-Type: application/json" -c cookies.txt -d '{"email":"carlos@etec.sp.gov.br","senha":"123456"}'
 
 # cria um time
-curl -X POST http://localhost:8082/meu-servlet/api/times -H "Content-Type: application/json" -b cookies.txt -d '{"nome":"Falcao da Silva","cor":"Azul","responsavel":"Carlos","contato":"11988887777"}'
+curl -X POST http://localhost:8082/api/times -H "Content-Type: application/json" -b cookies.txt -d '{"nome":"Falcao da Silva","cor":"Azul","responsavel":"Carlos","contato":"11988887777"}'
 ```
 
 **Postman/Insomnia:** importe a coleção ou use as URLs acima. Lembre-se de ativar
@@ -196,11 +196,11 @@ Calculada a partir das partidas `FINALIZADAS` de uma modalidade:
 |---|---|---|---|
 | `GET/POST` | `/api/turmas` | logado | Turmas |
 | `GET/POST` | `/api/modalidades` | logado | Modalidades |
-| `GET/POST` | `/api/inscricoes` | logado | Listar / Inscrever time |
-| `PUT` | `/api/inscricoes?id=1` | organizador | Confirmar ou negar inscrição |
+| `GET/POST` | `/api/inscricoes` | logado | Listar (filtro `?modalidadeId=`) / Inscrever time |
+| `PUT` | `/api/inscricoes?id=1` | organizador (status) | Atualizar inscrição / Confirmar ou negar |
 | `GET/POST` | `/api/partidas` | logado | Listar / Agendar partida |
 | `PATCH` | `/api/partidas?id=1` | organizador | Atualizar placar |
-| `POST` | `/api/partidas?id=1/finalizar` | organizador | Finalizar partida |
+| `POST` | `/api/partidas/finalizar?id=1` | organizador | Finalizar partida |
 | `GET` | `/api/classificacao?modalidadeId=1` | logado | Tabela de classificação |
 
 ---
@@ -210,27 +210,30 @@ Calculada a partir das partidas `FINALIZADAS` de uma modalidade:
 Cada atividade é um pedaço do sistema. Sugestão: uma dupla por atividade.
 
 ### Fase 1 — Fundamentos
-- [ ] **1. Criar as tabelas restantes** (`turma`, `modalidade`, `inscricao`, `partida`, `configuracao`)
+- [x] **1. Criar as tabelas restantes** (`turma`, `modalidade`, `inscricao`, `partida`, `configuracao`)
       com as chaves estrangeiras apontando para as tabelas existentes.
       Dica: adicione o `CREATE TABLE` dentro de `Conexao.criarTabelas`.
-- [ ] **2. Criar os Models** `Turma`, `Modalidade`, `Inscricao`, `Partida`, `Configuracao`
+- [x] **2. Criar os Models** `Turma`, `Modalidade`, `Inscricao`, `Partida`, `Configuracao`
       (use `Time` e `Usuario` como modelo).
-- [ ] **3. Criar os DAOs** correspondentes, com os 5 métodos CRUD
+- [x] **3. Criar os DAOs** correspondentes, com os 5 métodos CRUD
       (veja `TimeDao` como referência).
 
 ### Fase 2 — CRUDs e rotas
-- [ ] **4. `TurmaController`** — `/api/turmas` (GET, POST, PUT, DELETE)
-- [ ] **5. `ModalidadeController`** — `/api/modalidades` (GET, POST, PUT, DELETE),
+- [x] **4. `TurmaController`** — `/api/turmas` (GET, POST, PUT, DELETE)
+- [x] **5. `ModalidadeController`** — `/api/modalidades` (GET, POST, PUT, DELETE),
       incluindo ativar/desativar a modalidade.
-- [ ] **6. `InscricaoController`** — `/api/inscricoes`:
-      - listar todas e listar por modalidade (`?modalidadeId=`)
-      - inscribed time (com validação de **1 time por modalidade**)
-      - alterar status (`PENDENTE` → `CONFIRMADA`/`NEGADA`), somente organizador
-- [ ] **7. `PartidaController`** — `/api/partidas`:
-      - listar com filtros (`?modalidadeId=`, `?status=`, `?data=`)
-      - agendar partida, validando: mesma modalidade, times confirmados, times diferentes
-      - atualizar placar (só se não estiver `FINALIZADA`)
-      - finalizar partida
+- [x] **6. `InscricaoController`** — `/api/inscricoes`:
+      - [x] listar todas
+      - [x] listar por modalidade (`?modalidadeId=`)
+      - [x] inscrever time
+      - [x] validação de **1 time por modalidade**
+      - [x] alterar status (`PENDENTE` → `CONFIRMADA`/`NEGADA`), somente organizador
+- [x] **7. `PartidaController`** — `/api/partidas`:
+      - [x] listar com filtros (`?modalidadeId=`, `?status=`, `?data=`)
+      - [x] agendar partida
+      - [x] validar: mesma modalidade, times confirmados, times diferentes
+      - [x] atualizar placar (só se não estiver `FINALIZADA`)
+      - [x] finalizar partida (`POST /api/partidas/finalizar?id=1`)
 
 ### Fase 3 — Regras avançadas
 - [ ] **8. `ConfiguracaoDao` + rota** — ler e alterar `PONTOS_VITORIA`, `PONTOS_EMPATE`,
