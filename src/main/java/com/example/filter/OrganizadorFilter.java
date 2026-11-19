@@ -14,10 +14,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 
-/**
- * Filtro que protege as rotas /api/admin/*.
- * Somente usuarios do tipo ORGANIZADOR (logados com chave mestra) acessam essas rotas.
- */
 @WebFilter("/api/admin/*")
 public class OrganizadorFilter implements Filter {
 
@@ -43,11 +39,9 @@ public class OrganizadorFilter implements Filter {
 
     @Override
     public void init(FilterConfig filterConfig) {
-        // Nada a configurar
     }
 
     @Override
     public void destroy() {
-        // Nada a liberar
     }
 }

@@ -3,6 +3,7 @@ package com.example.controller;
 import com.example.dao.InscricaoDao;
 import com.example.dao.ModalidadeDao;
 import com.example.dao.PartidaDao;
+import com.example.dao.ConfiguracaoDao;
 import com.example.model.Partida;
 import com.example.util.JsonUtil;
 
@@ -17,12 +18,13 @@ import java.time.LocalDate;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 
-@WebServlet(urlPatterns = {"/api/partidas", "/api/partidas/finalizar"})
+@WebServlet(urlPatterns = {"/api/partidas", "/api/partidas/finalizar", "/api/admin/partidas", "/api/admin/partidas/finalizar"})
 public class PartidaController extends HttpServlet {
 
     private PartidaDao partidaDao = new PartidaDao();
     private ModalidadeDao modalidadeDao = new ModalidadeDao();
     private InscricaoDao inscricaoDao = new InscricaoDao();
+    private ConfiguracaoDao configuracaoDao = new ConfiguracaoDao();
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -69,6 +71,7 @@ public class PartidaController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         if (req.getServletPath() != null && req.getServletPath().endsWith("/finalizar")) {
             finalizar(req, resp);
             return;
@@ -86,6 +89,10 @@ public class PartidaController extends HttpServlet {
                 return;
             }
             if (!validarTimes(partida, resp)) {
+                return;
+            }
+            if (partida.getFase() == null || !partida.getFase().matches("AVULSO|GRUPOS|QUARTAS|SEMI|FINAL")) {
+                JsonUtil.enviarErro(resp, HttpServletResponse.SC_BAD_REQUEST, "Fase invalida. Use GRUPOS, QUARTAS, SEMI ou FINAL");
                 return;
             }
             if (partida.getData() == null || partida.getData().isBlank()) {
@@ -107,7 +114,7 @@ public class PartidaController extends HttpServlet {
         }
     }
 
-    /** Valida que os times sao diferentes e que ambos estao confirmados na modalidade. */
+    
     private boolean validarTimes(Partida partida, HttpServletResponse resp) throws IOException, SQLException {
         if (partida.getTimeAId() == partida.getTimeBId()) {
             JsonUtil.enviarErro(resp, HttpServletResponse.SC_BAD_REQUEST, "Os times devem ser diferentes");
@@ -122,7 +129,7 @@ public class PartidaController extends HttpServlet {
         return true;
     }
 
-    /** POST /api/partidas/finalizar?id=1 */
+    
     private void finalizar(HttpServletRequest req, HttpServletResponse resp) throws IOException {
         try {
             String id = req.getParameter("id");
@@ -145,6 +152,11 @@ public class PartidaController extends HttpServlet {
                 return;
             }
 
+            if (partida.getPlacarA() == partida.getPlacarB() && configuracaoDao.buscarValor("PERMITE_EMPATE") == 0) {
+                JsonUtil.enviarErro(resp, HttpServletResponse.SC_CONFLICT, "Empate nao permitido nesta competicao");
+                return;
+            }
+
             partida.setStatus("FINALIZADA");
             if (!partidaDao.atualizar(partida)) {
                 JsonUtil.enviarErro(resp, HttpServletResponse.SC_NOT_FOUND, "Partida não encontrada");
@@ -161,6 +173,7 @@ public class PartidaController extends HttpServlet {
     }
 
     protected  void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             String id = req.getParameter("id");
             if (id == null || id.isBlank()) {
@@ -222,6 +235,7 @@ public class PartidaController extends HttpServlet {
     }
 
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             String id = req.getParameter("id");
             if (id == null) {

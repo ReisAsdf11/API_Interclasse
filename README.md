@@ -38,7 +38,7 @@ curl -X POST http://localhost:8082/api/auth/registrar-organizador -H "Content-Ty
 curl -X POST http://localhost:8082/api/auth/login -H "Content-Type: application/json" -c cookies.txt -d '{"email":"carlos@etec.sp.gov.br","senha":"123456"}'
 
 # cria um time
-curl -X POST http://localhost:8082/api/times -H "Content-Type: application/json" -b cookies.txt -d '{"nome":"Falcao da Silva","cor":"Azul","responsavel":"Carlos","contato":"11988887777"}'
+curl -X POST http://localhost:8082/api/admin/times -H "Content-Type: application/json" -b cookies.txt -d '{"nome":"Falcao da Silva","cor":"Azul","responsavel":"Carlos","contato":"11988887777"}'
 ```
 
 **Postman/Insomnia:** importe a coleção ou use as URLs acima. Lembre-se de ativar
@@ -53,7 +53,11 @@ src/main/java/com/example/
 ├── controller/     -> Servlets (rotas HTTP). Recebem a requisição, chamam o DAO e devolvem JSON
 │   ├── ApiController.java
 │   ├── AuthController.java
-│   └── TimeController.java
+│   ├── TimeController.java
+│   ├── PartidaController.java
+│   ├── TurmaController.java
+│   ├── ModalidadeController.java
+│   └── InscricaoController.java
 ├── dao/            -> Acesso ao banco (SQL). Um DAO por entidade
 │   ├── TimeDao.java
 │   └── UsuarioDao.java
@@ -187,20 +191,29 @@ Calculada a partir das partidas `FINALIZADAS` de uma modalidade:
 |---|---|---|
 | `GET` | `/api/times` | Lista todos os times |
 | `GET` | `/api/times?id=1` | Detalhe de um time |
-| `POST` | `/api/times` | Cria um time |
-| `PUT` | `/api/times?id=1` | Atualiza um time |
-| `DELETE` | `/api/times?id=1` | Remove um time |
+| `POST` | `/api/admin/times` | Cria um time (organizador) |
+| `PUT` | `/api/admin/times?id=1` | Atualiza um time (organizador) |
+| `DELETE` | `/api/admin/times?id=1` | Remove um time (organizador) |
+| `GET` | `/api/classificacao?modalidadeId=1` | Consulta classificação |
+| `GET` | `/api/classificacao/csv?modalidadeId=1` | Exporta classificação em CSV |
+| `GET` | `/api/jogadores?modalidadeId=1` | Ranking de gols e assistências |
+| `POST` | `/api/admin/jogadores` | Cadastra jogador (organizador) |
+| `PUT` | `/api/admin/jogadores?id=1` | Atualiza gols e assistências (organizador) |
+| `GET` | `/api/configuracoes` | Consulta regras de pontuação |
+| `PUT` | `/api/admin/configuracoes` | Altera regras (organizador) |
 
-### A implementar
+### Rotas administrativas e consultas adicionais
 | Método | Rota | Acesso | Descrição |
 |---|---|---|---|
-| `GET/POST` | `/api/turmas` | logado | Turmas |
-| `GET/POST` | `/api/modalidades` | logado | Modalidades |
-| `GET/POST` | `/api/inscricoes` | logado | Listar (filtro `?modalidadeId=`) / Inscrever time |
-| `PUT` | `/api/inscricoes?id=1` | organizador (status) | Atualizar inscrição / Confirmar ou negar |
-| `GET/POST` | `/api/partidas` | logado | Listar / Agendar partida |
-| `PATCH` | `/api/partidas?id=1` | organizador | Atualizar placar |
-| `POST` | `/api/partidas/finalizar?id=1` | organizador | Finalizar partida |
+| `GET` | `/api/turmas` | logado | Consulta turmas |
+| `POST/PUT/DELETE` | `/api/admin/turmas` | organizador | Escrita de turmas |
+| `GET` | `/api/modalidades` | logado | Consulta modalidades |
+| `POST/PUT/DELETE` | `/api/admin/modalidades` | organizador | Escrita de modalidades |
+| `GET/POST` | `/api/inscricoes` | logado | Consulta / inscreve time |
+| `PUT/DELETE` | `/api/admin/inscricoes?id=1` | organizador | Atualiza ou remove inscrição |
+| `GET` | `/api/partidas` | logado | Consulta partidas |
+| `POST/PUT/PATCH/DELETE` | `/api/admin/partidas` | organizador | Agenda, altera ou remove partida |
+| `POST` | `/api/admin/partidas/finalizar?id=1` | organizador | Finaliza partida |
 | `GET` | `/api/classificacao?modalidadeId=1` | logado | Tabela de classificação |
 
 ---
@@ -233,15 +246,15 @@ Cada atividade é um pedaço do sistema. Sugestão: uma dupla por atividade.
       - [x] agendar partida
       - [x] validar: mesma modalidade, times confirmados, times diferentes
       - [x] atualizar placar (só se não estiver `FINALIZADA`)
-      - [x] finalizar partida (`POST /api/partidas/finalizar?id=1`)
+      - [x] finalizar partida (`POST /api/admin/partidas/finalizar?id=1`)
 
 ### Fase 3 — Regras avançadas
-- [ ] **8. `ConfiguracaoDao` + rota** — ler e alterar `PONTOS_VITORIA`, `PONTOS_EMPATE`,
+- [x] **8. `ConfiguracaoDao` + rota** — ler e alterar `PONTOS_VITORIA`, `PONTOS_EMPATE`,
       `PONTOS_DERROTA`, `PERMITE_EMPATE`.
-- [ ] **9. `ClassificacaoController`** — `/api/classificacao?modalidadeId=1`:
+- [x] **9. Classificação dentro de `TimeController`** — `/api/classificacao?modalidadeId=1`:
       calcula pontos, vitórias, saldo e ordena conforme a seção 5.4.
-- [ ] **10. Validar empate** — se `PERMITE_EMPATE = 0`, bloquear a finalização de partida empatada.
-- [ ] **11. Proteger as rotas de escrita** — mover o CRUD de organizers para `/api/admin/*`
+- [x] **10. Validar empate** — se `PERMITE_EMPATE = 0`, bloquear a finalização de partida empatada.
+- [x] **11. Proteger as rotas de escrita** — mover o CRUD de organizers para `/api/admin/*`
       (já existe o `OrganizadorFilter`) e deixar as rotas de leitura livres para logados.
 
 ### Fase 4 — Acabamento
@@ -253,9 +266,9 @@ Cada atividade é um pedaço do sistema. Sugestão: uma dupla por atividade.
       inválida, sem permissão, recurso inexistente).
 
 ### Bônus
-- [ ] **15.** Chaveamento: grupos + mata-mata (`fase` = `GRUPOS`, `QUARTAS`, `SEMI`, `FINAL`).
-- [ ] **16.** Ranking individual (gols/assistências dos jogadores).
-- [ ] **17.** Exportar a classificação em CSV.
+- [x] **15.** Campo de fase para grupos e mata-mata: grupos + mata-mata (`fase` = `GRUPOS`, `QUARTAS`, `SEMI`, `FINAL`).
+- [x] **16.** Ranking individual (gols/assistências dos jogadores).
+- [x] **17.** Exportar a classificação em CSV.
 
 ---
 
@@ -266,4 +279,87 @@ Cada atividade é um pedaço do sistema. Sugestão: uma dupla por atividade.
   (`400` requisição inválida, `401` sem login, `403` sem permissão, `404` não encontrado, `409` conflito).
 - **Datas:** texto no formato `yyyy-MM-dd` (`2026-11-20`).
 - **SQL:** sempre `PreparedStatement`, nunca concatenar string.
-- **Controller:** valida a entrada, chama o DAO e monta a resposta. Sem SQL na controller.
+- **Controller:** valida a entrada e monta a resposta. Algumas consultas adicionais de classificação e jogadores usam SQL diretamente no `TimeController`, seguindo a implementação simples deste projeto.
+
+## 9. Regras avançadas e rotas adicionais
+
+### Configurações (somente organizador para alterar)
+- `GET /api/configuracoes` lista as quatro regras.
+- `PUT /api/admin/configuracoes` altera uma regra. Exemplo:
+
+```bash
+curl -X PUT http://localhost:8082/api/admin/configuracoes -b cookies.txt \
+  -H "Content-Type: application/json" \
+  -d '{"chave":"PONTOS_VITORIA","valor":3}'
+```
+
+As chaves aceitas são `PONTOS_VITORIA`, `PONTOS_EMPATE`, `PONTOS_DERROTA` e `PERMITE_EMPATE`. Para `PERMITE_EMPATE`, use 1 ou 0.
+
+### Classificação e CSV
+- `GET /api/classificacao?modalidadeId=1` calcula pontos, vitórias e saldo de gols. A ordem é pontos, vitórias, saldo e nome.
+- `GET /api/classificacao/csv?modalidadeId=1` baixa `classificacao.csv`.
+
+```bash
+curl "http://localhost:8082/api/classificacao?modalidadeId=1"
+curl -b cookies.txt -o classificacao.csv "http://localhost:8082/api/classificacao/csv?modalidadeId=1"
+```
+
+### Fases e jogadores
+As partidas aceitam `fase`: `GRUPOS`, `QUARTAS`, `SEMI` ou `FINAL` (também existe `AVULSO` para partidas sem chaveamento). Se `PERMITE_EMPATE` estiver em 0, a finalização de placar empatado retorna HTTP 409.
+
+- `GET /api/jogadores?modalidadeId=1` mostra o ranking individual por gols e assistências.
+- `POST /api/admin/jogadores` cadastra jogador (organizador): `{"nome":"Ana","timeId":1}`.
+- `PUT /api/admin/jogadores?id=1` atualiza estatísticas: `{"gols":4,"assistencias":2}`.
+
+Exemplo:
+```bash
+curl -X POST http://localhost:8082/api/admin/jogadores -H "Content-Type: application/json" -b cookies.txt -d '{"nome":"Ana","timeId":1}'
+curl -X PUT "http://localhost:8082/api/admin/jogadores?id=1" -H "Content-Type: application/json" -b cookies.txt -d '{"gols":4,"assistencias":2}'
+```
+
+### Proteção administrativa
+As operações de escrita administrativa de times, turmas e modalidades usam `/api/admin/times`, `/api/admin/turmas` e `/api/admin/modalidades`. As alterações administrativas de partidas usam `/api/admin/partidas` e `/api/admin/partidas/finalizar`. A remoção administrativa de inscrições usa `/api/admin/inscricoes`. Essas rotas passam pelo `OrganizadorFilter`; as rotas GET originais continuam disponíveis para consulta.
+
+## 10. Checklist de testes manuais
+
+- [ ] `GET /api/configuracoes`: conferir as quatro configurações padrão.
+- [ ] `PUT /api/admin/configuracoes`: testar organizador logado; testar participante (403), sem login (401), chave desconhecida (400) e valor negativo (400).
+- [ ] `GET /api/classificacao?modalidadeId=1`: testar modalidade existente, parâmetro ausente, texto no lugar do número e modalidade sem jogos.
+- [ ] `POST /api/admin/partidas/finalizar?id=1`: testar placar empatado com `PERMITE_EMPATE=0` (409), empate permitido, partida inexistente (404) e partida já finalizada (409).
+- [ ] `GET /api/admin/times`: testar sem login (401), participante (403) e organizador (200).
+- [ ] `POST /api/admin/times`: testar nome válido, nome vazio e sem permissão.
+- [ ] `GET /api/classificacao/csv?modalidadeId=1`: abrir o arquivo em editor de texto ou planilha.
+- [ ] `POST /api/admin/jogadores`: testar jogador válido, nome vazio e time inexistente.
+- [ ] `PUT /api/admin/jogadores?id=1`: testar estatísticas válidas, valores negativos e jogador inexistente.
+
+
+## 11. Rotas administrativas atualizadas
+
+| Método | Rota | Acesso | Função |
+|---|---|---|---|
+| GET | `/api/times` | consulta | Lista ou busca time |
+| POST, PUT, DELETE | `/api/admin/times` | organizador | CRUD de times |
+| GET | `/api/turmas` | consulta | Lista ou busca turma |
+| POST, PUT, DELETE | `/api/admin/turmas` | organizador | CRUD de turmas |
+| GET | `/api/modalidades` | consulta | Lista ou busca modalidade |
+| POST, PUT, DELETE | `/api/admin/modalidades` | organizador | CRUD de modalidades |
+| GET | `/api/partidas` | consulta | Lista partidas e filtros |
+| POST, PUT, DELETE | `/api/admin/partidas` | organizador | Agenda, altera ou remove partida |
+| POST | `/api/admin/partidas/finalizar?id=1` | organizador | Finaliza partida |
+| GET | `/api/inscricoes` | consulta | Lista inscrições |
+| POST | `/api/inscricoes` | logado | Inscreve time |
+| PUT | `/api/inscricoes?id=1` | organizador para alterar status | Atualiza inscrição |
+| DELETE | `/api/admin/inscricoes?id=1` | organizador | Remove inscrição |
+| GET | `/api/classificacao?modalidadeId=1` | consulta | Classificação |
+| GET | `/api/classificacao/csv?modalidadeId=1` | consulta | Exportação CSV |
+| GET | `/api/configuracoes` | consulta | Consulta regras |
+| PUT | `/api/admin/configuracoes` | organizador | Altera regras |
+| GET | `/api/jogadores` | consulta | Ranking individual |
+| POST, PUT | `/api/admin/jogadores` | organizador | Cadastro e atualização de estatísticas |
+
+As consultas são mantidas nas rotas normais. As operações administrativas de escrita usam o prefixo `/api/admin` e são verificadas pelo filtro de organizador.
+
+
+## Organização dos Controllers
+
+As rotas de configuração ficam no `ApiController`. As consultas de classificação, exportação CSV e ranking de jogadores, além do CRUD de times e jogadores, ficam no `TimeController`. As partidas continuam no `PartidaController`. Não existem Controllers separados para classificação, configuração ou jogadores. As rotas de escrita ficam em `/api/admin/*` e são protegidas pelo `OrganizadorFilter`.

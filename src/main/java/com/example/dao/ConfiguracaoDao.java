@@ -1,91 +1,41 @@
-
 package com.example.dao;
 
 import com.example.model.Configuracao;
 import com.example.util.Conexao;
-
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.List;
+import java.sql.*;
+import java.util.*;
 
 public class ConfiguracaoDao {
+    private static final String[] CHAVES = {"PONTOS_VITORIA", "PONTOS_EMPATE", "PONTOS_DERROTA", "PERMITE_EMPATE"};
 
-    private static final String SQL_LISTAR = "SELECT * FROM configuracao ORDER BY chave";
-    private static final String SQL_BUSCAR = "SELECT * FROM configuracao WHERE chave = ?";
-    private static final String SQL_INSERIR = "INSERT INTO configuracao (chave, valor) VALUES (?, ?)";
-    private static final String SQL_ATUALIZAR = "UPDATE configuracao SET valor = ? WHERE chave = ?";
-    private static final String SQL_DELETAR = "DELETE FROM configuracao WHERE chave = ?";
+    public ConfiguracaoDao() {
+        try (PreparedStatement ps = Conexao.getConexao().prepareStatement("INSERT OR IGNORE INTO configuracao(chave, valor) VALUES (?, ?)")) {
+            String[] valores = {"3", "1", "0", "1"};
+            for (int i = 0; i < CHAVES.length; i++) {
+                ps.setString(1, CHAVES[i]); ps.setString(2, valores[i]); ps.addBatch();
+            }
+            ps.executeBatch();
+        } catch (SQLException e) { throw new RuntimeException("Erro ao criar configuracoes padrao", e); }
+    }
 
     public List<Configuracao> listar() throws SQLException {
-        List<Configuracao> configuracoes = new ArrayList<>();
-        Connection conn = Conexao.getConexao();
-
-        try (PreparedStatement ps = conn.prepareStatement(SQL_LISTAR);
-             ResultSet rs = ps.executeQuery()) {
-
-            while (rs.next()) {
-                configuracoes.add(mapear(rs));
-            }
+        List<Configuracao> lista = new ArrayList<>();
+        try (PreparedStatement ps = Conexao.getConexao().prepareStatement("SELECT chave, valor FROM configuracao WHERE chave IN (?,?,?,?) ORDER BY chave")) {
+            for (int i=0;i<CHAVES.length;i++) ps.setString(i+1, CHAVES[i]);
+            try (ResultSet rs=ps.executeQuery()) { while(rs.next()) lista.add(new Configuracao(rs.getString("chave"),rs.getString("valor"))); }
         }
-
-        return configuracoes;
+        return lista;
     }
 
-    public Configuracao buscarPorChave(String chave) throws SQLException {
-        Connection conn = Conexao.getConexao();
-
-        try (PreparedStatement ps = conn.prepareStatement(SQL_BUSCAR)) {
-            ps.setString(1, chave);
-
-            try (ResultSet rs = ps.executeQuery()) {
-                return rs.next() ? mapear(rs) : null;
-            }
+    public int buscarValor(String chave) throws SQLException {
+        try (PreparedStatement ps=Conexao.getConexao().prepareStatement("SELECT valor FROM configuracao WHERE chave=?")) {
+            ps.setString(1,chave); try(ResultSet rs=ps.executeQuery()){ return rs.next()?Integer.parseInt(rs.getString(1)):0; }
         }
     }
 
-    public Configuracao inserir(Configuracao configuracao) throws SQLException {
-        Connection conn = Conexao.getConexao();
-
-        try (PreparedStatement ps = conn.prepareStatement(SQL_INSERIR)) {
-            ps.setString(1, configuracao.getChave());
-            ps.setString(2, configuracao.getValor());
-
-            ps.executeUpdate();
+    public boolean atualizar(String chave, int valor) throws SQLException {
+        try (PreparedStatement ps=Conexao.getConexao().prepareStatement("UPDATE configuracao SET valor=? WHERE chave=?")) {
+            ps.setString(1,String.valueOf(valor)); ps.setString(2,chave); return ps.executeUpdate()>0;
         }
-
-        return configuracao;
-    }
-
-    public boolean atualizar(Configuracao configuracao) throws SQLException {
-        Connection conn = Conexao.getConexao();
-
-        try (PreparedStatement ps = conn.prepareStatement(SQL_ATUALIZAR)) {
-            ps.setString(1, configuracao.getValor());
-            ps.setString(2, configuracao.getChave());
-
-            return ps.executeUpdate() > 0;
-        }
-    }
-
-    public boolean deletar(String chave) throws SQLException {
-        Connection conn = Conexao.getConexao();
-
-        try (PreparedStatement ps = conn.prepareStatement(SQL_DELETAR)) {
-            ps.setString(1, chave);
-
-            return ps.executeUpdate() > 0;
-        }
-    }
-
-    private Configuracao mapear(ResultSet rs) throws SQLException {
-        Configuracao configuracao = new Configuracao();
-
-        configuracao.setChave(rs.getString("chave"));
-        configuracao.setValor(rs.getString("valor"));
-
-        return configuracao;
     }
 }

@@ -9,14 +9,12 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 
-/**
- * Auxiliares de JSON para as controllers.
- */
+
 public class JsonUtil {
 
     private static final Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
-    /** Envia um objeto como resposta JSON (200). */
+    
     public static void enviar(HttpServletResponse response, Object objeto) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(HttpServletResponse.SC_OK);
@@ -25,7 +23,7 @@ public class JsonUtil {
         out.flush();
     }
 
-    /** Envia uma mensagem de sucesso (ex: "Time removido"). */
+    
     public static void enviarMensagem(HttpServletResponse response, int status, String mensagem) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(status);
@@ -34,7 +32,7 @@ public class JsonUtil {
         out.flush();
     }
 
-    /** Envia uma mensagem de erro com o status HTTP informado. */
+    
     public static void enviarErro(HttpServletResponse response, int status, String mensagem) throws IOException {
         response.setContentType("application/json;charset=UTF-8");
         response.setStatus(status);
@@ -43,7 +41,7 @@ public class JsonUtil {
         out.flush();
     }
 
-    /** Le o corpo da requisicao e converte para o tipo informado. */
+    
     public static <T> T ler(HttpServletRequest request, Class<T> classe) throws IOException {
         BufferedReader reader = request.getReader();
         StringBuilder sb = new StringBuilder();
@@ -54,10 +52,14 @@ public class JsonUtil {
         if (sb.length() == 0) {
             return null;
         }
-        return gson.fromJson(sb.toString(), classe);
+        try {
+            return gson.fromJson(sb.toString(), classe);
+        } catch (RuntimeException e) {
+            return null;
+        }
     }
 
-    /** Objeto simples de retorno de erro. */
+    
     public static class Erro {
         private String erro;
 
@@ -70,7 +72,7 @@ public class JsonUtil {
         }
     }
 
-    /** Objeto simples de retorno de mensagem. */
+    
     public static class Mensagem {
         private String mensagem;
 

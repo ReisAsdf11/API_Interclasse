@@ -11,10 +11,7 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * DAO de exemplo com as operacoes basicas de um CRUD.
- * Os alunos podem usar este arquivo como modelo para criar os demais DAOs.
- */
+
 public class TimeDao {
 
     private static final String SQL_LISTAR = "SELECT * FROM time ORDER BY nome";

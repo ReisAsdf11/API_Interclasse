@@ -18,7 +18,7 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
 
-@WebServlet("/api/inscricoes")
+@WebServlet(urlPatterns = {"/api/inscricoes", "/api/admin/inscricoes"})
 public class InscricaoController extends HttpServlet {
 
     private InscricaoDao inscricaoDao = new InscricaoDao();
@@ -196,7 +196,7 @@ public class InscricaoController extends HttpServlet {
         }
     }
 
-    /** Usa o id da query string quando informado; caso contrário, o id vindo do corpo. */
+    
     private Integer lerId(String parametro, int idCorpo) {
         if (parametro != null && !parametro.isBlank()) {
             int id = Integer.parseInt(parametro);
@@ -206,6 +206,7 @@ public class InscricaoController extends HttpServlet {
     }
 
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             String id = req.getParameter("id");
             if (id == null) {

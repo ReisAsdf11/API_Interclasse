@@ -1,9 +1,6 @@
 package com.example.model;
 
-/**
- * Entidade Usuario.
- * tipo = PARTICIPANTE (cadastro direto) ou ORGANIZADOR (cadastro com chave mestra).
- */
+
 public class Usuario {
 
     private Integer id;

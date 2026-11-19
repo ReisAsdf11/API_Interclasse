@@ -14,16 +14,6 @@ import javax.servlet.http.HttpSession;
 import java.io.IOException;
 import java.sql.SQLException;
 
-/**
- * Controller de autenticacao.
- *
- * Rotas:
- *   POST /api/auth/registrar           -> cadastro do participante (livre)
- *   POST /api/auth/registrar-organizador-> cadastro do organizador (exige chave mestra)
- *   POST /api/auth/login                -> faz login
- *   POST /api/auth/logout               -> faz logout
- *   GET  /api/auth/me                   -> dados do usuario logado
- */
 @WebServlet("/api/auth/*")
 public class AuthController extends HttpServlet {
 
@@ -82,7 +72,6 @@ public class AuthController extends HttpServlet {
         }
     }
 
-    /** Cadastro de participante (livre) ou de organizador (com chave mestra). */
     private void registrar(HttpServletRequest request, HttpServletResponse response, boolean organizador) throws IOException, SQLException {
         Credencial credencial = JsonUtil.ler(request, Credencial.class);
 
@@ -91,6 +80,11 @@ public class AuthController extends HttpServlet {
                 || credencial.email == null || credencial.email.isBlank()
                 || credencial.senha == null || credencial.senha.isBlank()) {
             JsonUtil.enviarErro(response, HttpServletResponse.SC_BAD_REQUEST, "nome, email e senha sao obrigatorios");
+            return;
+        }
+
+        if (!credencial.email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
+            JsonUtil.enviarErro(response, HttpServletResponse.SC_BAD_REQUEST, "email invalido");
             return;
         }
 
@@ -147,7 +141,6 @@ public class AuthController extends HttpServlet {
         JsonUtil.enviarMensagem(response, HttpServletResponse.SC_OK, "logout realizado");
     }
 
-    /** Le a ultima parte da URL (ex: /api/auth/login -> login). */
     private String acao(HttpServletRequest request) {
         String path = request.getPathInfo();
         if (path == null || path.isBlank() || "/".equals(path)) {
@@ -156,7 +149,6 @@ public class AuthController extends HttpServlet {
         return path.substring(1);
     }
 
-    /** Objeto de entrada do login/cadastro. */
     public static class Credencial {
         public String nome;
         public String email;

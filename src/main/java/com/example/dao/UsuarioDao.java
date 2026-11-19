@@ -9,9 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * DAO de Usuario (base do sistema de login).
- */
+
 public class UsuarioDao {
 
     private static final String SQL_BUSCAR_EMAIL = "SELECT * FROM usuario WHERE email = ?";
@@ -58,7 +56,7 @@ public class UsuarioDao {
         return usuario;
     }
 
-    /** Verifica se a chave informada existe na tabela de chaves mestras. */
+    
     public boolean chaveExiste(String chave) throws SQLException {
         Connection conn = Conexao.getConexao();
         try (PreparedStatement ps = conn.prepareStatement(SQL_CHAVE_EXISTE)) {
@@ -69,7 +67,7 @@ public class UsuarioDao {
         }
     }
 
-    /** Cadastra uma nova chave mestra (usado para distribuir acessos aos organizadores). */
+    
     public void cadastrarChave(String chave) throws SQLException {
         Connection conn = Conexao.getConexao();
         try (PreparedStatement ps = conn.prepareStatement(SQL_CHAVE_CADASTRO)) {

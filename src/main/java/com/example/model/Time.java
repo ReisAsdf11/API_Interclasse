@@ -1,8 +1,6 @@
 package com.example.model;
 
-/**
- * Entidade Time (exemplo). Serve de modelo para os alunos entenderem o padrão.
- */
+
 public class Time {
 
     private Integer id;

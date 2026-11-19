@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
-@WebServlet("/api/modalidades")
+@WebServlet(urlPatterns = {"/api/modalidades", "/api/admin/modalidades"})
 public class ModalidadeController extends HttpServlet {
 
     private ModalidadeDao modalidadeDao = new ModalidadeDao();
@@ -47,6 +47,7 @@ public class ModalidadeController extends HttpServlet {
 
     @Override
     protected void doPost(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             Modalidade modalidade = JsonUtil.ler(req, Modalidade.class);
 
@@ -64,6 +65,7 @@ public class ModalidadeController extends HttpServlet {
     }
 
     protected  void doPut(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             String id = req.getParameter("id");
             if (id == null) {
@@ -91,6 +93,7 @@ public class ModalidadeController extends HttpServlet {
     }
 
     protected void doDelete(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
+        if (!req.getServletPath().startsWith("/api/admin/")) { JsonUtil.enviarErro(resp, HttpServletResponse.SC_FORBIDDEN, "Use a rota /api/admin para esta operacao"); return; }
         try {
             String id = req.getParameter("id");
             if (id == null) {

@@ -5,14 +5,10 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Conexão com o banco SQLite (arquivo único, sem servidor de banco).
- *
- * O banco e as tabelas são criados automaticamente na primeira conexão.
- */
+
 public class Conexao {
 
-    /** Caminho do arquivo do banco. Pode ser alterado pela variável de ambiente INTERCLASSE_DB. */
+    
     private static final String URL = "jdbc:sqlite:" + caminhoBanco();
 
     private static Connection conexao = null;
@@ -44,10 +40,7 @@ public class Conexao {
         return conexao;
     }
 
-    /**
-     * Script das tabelas usadas pela base. Alunos podem ampliar este script
-     * conforme implementam as atividades do README.
-     */
+    
     private static void criarTabelas(Connection conn) throws SQLException {
         String[] scripts = {
             """
@@ -127,7 +120,13 @@ public class Conexao {
                 valor TEXT
             )
             """,
-            "INSERT OR IGNORE INTO chave_mestra (chave) VALUES ('ETEC-INTERCLASSE-2026')"
+            "INSERT OR IGNORE INTO chave_mestra (chave) VALUES ('ETEC-INTERCLASSE-2026')",
+            "INSERT OR IGNORE INTO configuracao(chave,valor) VALUES ('PONTOS_VITORIA','3')",
+            "INSERT OR IGNORE INTO configuracao(chave,valor) VALUES ('PONTOS_EMPATE','1')",
+            "INSERT OR IGNORE INTO configuracao(chave,valor) VALUES ('PONTOS_DERROTA','0')",
+            "INSERT OR IGNORE INTO configuracao(chave,valor) VALUES ('PERMITE_EMPATE','1')",
+            "CREATE TABLE IF NOT EXISTS jogador (id INTEGER PRIMARY KEY AUTOINCREMENT, nome TEXT NOT NULL, time_id INTEGER NOT NULL, FOREIGN KEY(time_id) REFERENCES time(id))",
+            "CREATE TABLE IF NOT EXISTS estatistica_jogador (id INTEGER PRIMARY KEY AUTOINCREMENT, jogador_id INTEGER NOT NULL UNIQUE, gols INTEGER NOT NULL DEFAULT 0, assistencias INTEGER NOT NULL DEFAULT 0, FOREIGN KEY(jogador_id) REFERENCES jogador(id))"
         };
 
         try (Statement stmt = conn.createStatement()) {
